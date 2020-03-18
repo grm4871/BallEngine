@@ -101,18 +101,24 @@ class Circle {
                 var dist = Math.sqrt(distsq);
                 var overlap = .5*(dist-this.radius - circle.radius)
 
+                if(dist == 0) {
+                    circle.x+=.05;                
+                    dist = Math.sqrt(Math.pow(this.x-circle.x,2) + Math.pow(this.y-circle.y,2));
+                    overlap = .5*(dist-this.radius - circle.radius);
+                }
+
                 //this ball
                 this.x -= overlap * (this.x - circle.x) / dist;
                 this.y -= overlap * (this.y - circle.y) / dist;
-
-                //debounce
-
 
                 //other ball
                 circle.x += overlap * (this.x - circle.x) / dist;
                 circle.y += overlap * (this.y - circle.y) / dist;
 
                 //resolve dynamic collision
+
+                //recalculate dist
+                dist = Math.sqrt(Math.pow(this.x-circle.x,2) + Math.pow(this.y-circle.y,2));
 
                 //normal
                 var nx = (circle.x-this.x) / dist;
