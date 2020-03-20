@@ -14,6 +14,9 @@ down = false;
 
 stepsPerFrame = 4;
 
+
+let Circles = [];
+
 window.addEventListener('keydown', function(event) {
     console.log(event);
     if (event.keyCode == 37 && !left) {
@@ -69,16 +72,19 @@ class Circle {
         this.y = y;
         this.vx = 0;
         this.vy = 0;
-        this.m = 160;
         this.fx = 0;
         this.fy = 0;
-        this.airres = .995;
+        this.airres = .99;
         this.force = f;
+        this.updatemass();
+    }
+    updatemass() {
+        this.m = this.radius * 100;
     }
     draw() {
         c.beginPath()
         c.arc(this.x,this.y,this.radius,0,Math.PI*2,false);
-        c.strokeStyle = 'cyan';
+        c.strokeStyle = "rgb(" + this.force * 12.75 + ", 255, 255)"; 
         c.stroke();
     }
     setforce() { 
@@ -197,7 +203,12 @@ class Circle {
             var food = Foods[f];
             var distsq = (Math.pow(this.x-food.x,2) + Math.pow(this.y-food.y,2));
             if(distsq < Math.pow((this.radius + food.radius),2)) {
+                //ate a food
                 Foods.splice(f,1);
+                if(this.radius < 50) {
+                    this.radius += 2;
+                }
+                this.updatemass();
             }
         }
         //move based on kinematics
@@ -207,7 +218,27 @@ class Circle {
         this.vx = this.airres * this.vx;
         this.vy += this.fy / this.m;
         this.vy = this.airres * this.vy;
-        
+
+        //decay
+        this.radius -= (Math.abs(this.vx) + Math.abs(this.vy))*.01
+        this.updatemass();
+
+        //delete self if tiny (death)
+        if(this.radius < 2) {
+            for(var circ in Circles) {
+                if(Circles[circ] == this) {
+                    Circles.splice(circ, 1);
+                }
+            }
+        }
+
+        //reproduce if large
+        if(this.radius > 50) {
+            this.radius -= 20;
+            this.updatemass();
+            Circles.push(new Circle(30, this.x, this.y-this.radius-30, this.force + Math.random() * 5 - 2.5));
+        }
+
         c.beginPath();
         c.strokeStyle = 'yellow';
         c.moveTo(this.x, this.y);
@@ -215,7 +246,7 @@ class Circle {
         c.stroke();
 
 
-        //if velocity small, stop
+        //if velocity small (and no force), stop
         if (Math.abs(this.vx) < .05 && this.fx == 0) { this.vx = 0;}
         if (Math.abs(this.vy) < .05 && this.fy == 0) { this.vy = 0;}
         this.setforce();
@@ -237,8 +268,6 @@ class Food {
     }
 }
 
-
-let Circles = [];
 Circles.push(new Circle(30, 100, 100, 10));
 
 let Foods = [];
@@ -257,11 +286,11 @@ function animate() {
         }
     }
     dt = Date.now() - t;
-
-    if(dt > 2000) {
+    if(dt > 50) {
         Foods.push(new Food(Math.random()*cw, Math.random()*ch))
         t = Date.now();
     }
 }
+
 
 animate();
